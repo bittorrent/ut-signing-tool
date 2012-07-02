@@ -1,0 +1,76 @@
+COMPILING:
+
+	make sure you have OpenSSL installed (it probably already is)
+	
+	run the make command
+
+
+USAGE:
+
+	ut-signing-tool [--exclude-cert] privkey.pem cert.pem in.torrent out.torrent
+
+
+TORRENT FORMAT:
+
+	{
+		announce: ...,
+		info: { ... },
+		signatures: {
+			com.bittorrent (the signing identity): {
+				info (optional): {
+					/*
+						this is mainly for extensibility. allowing this optional dict that 
+						is signed, but doesn't change the identity of the torrent allows 
+						things like urls and comments to be added to signatures (and to be 
+						trusted). 
+					*/
+				},
+				certificate (optional): 0123456789ABCDEF0123456789ABCDEF...,
+					/*	
+						this is the DER encoded x.509 certificate
+						
+						this can be excluded to cut down on file size. if it's excluded,
+						the user must already have this certificate stored and trusted
+					
+						if the issuer of this cert is trusted, this cert is also trusted
+						
+						there are no intermediate certificate authorities. only a root
+						authority
+					*/
+				]
+				signature: (sha1 signed data = info + signature info if present),
+			},
+			...
+		}
+	}
+	
+
+CREATING A SIGNING IDENTITY:
+
+	create your private key:
+
+		openssl genrsa -des3 -out privkey.pem 2048
+	
+	create a certificate request:
+		
+			openssl req -new -key privkey.pem -out cert.csr
+
+			the common name should be a unique identifier for the identity in reverse-dns notation (eg com.bittorrent.chris)
+
+	request your cert from a trusted certificate authority (eg BitTorrent) or sign your own certificate request
+
+	don't use these keys for anything other than signing torrents and other certificates!
+
+
+SIGNING A CERTIFICATE REQUEST:
+
+	first, configure openssl to not add any extensions to the certificate. this will make the certificate v1 which 
+	drastically reduces the size of the certificate
+	
+	comment out this line in your openssl.cnf (/System/Library/OpenSSL/openssl.cnf on osx):
+
+		x509_extensions        = usr_cert              # The extentions to add to the cert
+
+	the serial number (after -set_serial) in the following command MUST be unique for ALL certificates you issue!
+
+		openssl x509 -req -days 365 -in cert.csr -CA ../com.bittorrent/cert.pem -CAkey ../com.bittorrent/privkey.pem -set_serial 01 -out cert.pem
