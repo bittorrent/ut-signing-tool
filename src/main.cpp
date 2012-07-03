@@ -193,7 +193,7 @@ int main(int argc, const char* argv[]) {
 		OPENSSL_ERROR_OUT();
 	}
 	
-	printf("Signature (%u bytes):\n", sig_len);
+	printf("Signature size: %u\n", sig_len);
 	
 	// prepare the new file data
 	
