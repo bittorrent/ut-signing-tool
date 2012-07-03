@@ -1,6 +1,9 @@
 COMPILING:
 
-	make sure you have OpenSSL installed (it probably already is)
+	if you're running Windows, use a linux-like environment such as Cygwin or MinGW
+
+	make sure you have GNU make, a compiler such as gcc or clang, and OpenSSL installed 
+	(they probably already are)
 	
 	run the make command
 
@@ -55,22 +58,25 @@ CREATING A SIGNING IDENTITY:
 		
 			openssl req -new -key privkey.pem -out cert.csr
 
-			the common name should be a unique identifier for the identity in reverse-dns notation (eg com.bittorrent.chris)
+			the common name should be a unique identifier for the identity in reverse-dns 
+			notation (eg com.bittorrent.chris)
 
-	request your cert from a trusted certificate authority (eg BitTorrent) or sign your own certificate request
+	request your cert from a trusted certificate authority (eg BitTorrent) or sign your 
+	own certificate request
 
 	don't use these keys for anything other than signing torrents and other certificates!
 
 
 SIGNING A CERTIFICATE REQUEST:
 
-	first, configure openssl to not add any extensions to the certificate. this will make the certificate v1 which 
-	drastically reduces the size of the certificate
+	first, configure openssl to not add any extensions to the certificate. this will make 
+	the certificate v1 which drastically reduces the size of the certificate
 	
 	comment out this line in your openssl.cnf (/System/Library/OpenSSL/openssl.cnf on osx):
 
 		x509_extensions        = usr_cert              # The extentions to add to the cert
 
-	the serial number (after -set_serial) in the following command MUST be unique for ALL certificates you issue!
+	the serial number (after -set_serial) in the following command MUST be unique for ALL 
+	certificates you issue!
 
-		openssl x509 -req -days 365 -in cert.csr -CA ../com.bittorrent/cert.pem -CAkey ../com.bittorrent/privkey.pem -set_serial 01 -out cert.pem
+		openssl x509 -req -days 365 -in cert.csr -CA cert.pem -CAkey privkey.pem -set_serial 01 -out newcert.pem
