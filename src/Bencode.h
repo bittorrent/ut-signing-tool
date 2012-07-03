@@ -5,8 +5,6 @@
 #include <vector>
 #include <stdint.h>
 
-typedef int64_t int64;
-
 typedef enum {
 	BencodeTypeInvalid,
 	BencodeTypeByteString,
@@ -45,12 +43,12 @@ class BencodeObject {
 		BencodeType type();
 		
 		// for ints
-		int64 intValue(int64 def = 0);
-		void setIntValue(int64 val);
+		int64_t intValue(int64_t def = 0);
+		void setIntValue(int64_t val);
 
 		// for dicts
 		BencodeObject* valueForKey(const char* key);
-		int64 intValueForKey(const char* key, int64 def = 0);
+		int64_t intValueForKey(const char* key, int64_t def = 0);
 		const char* stringValueForKey(const char* key, const char* def = "");
 		const void* byteStringValueForKey(const char* key, size_t* len);
 		BencodeDictStorage* dictValue();
@@ -77,7 +75,7 @@ class BencodeObject {
 		BencodeType _type;
 		BencodeMode _mode;
 		
-		int64 _intValue;
+		int64_t _intValue;
 
 		size_t _actualLength;
 

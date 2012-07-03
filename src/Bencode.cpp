@@ -95,7 +95,7 @@ BencodeObject::BencodeObject(const void* data, size_t len, BencodeMode mode) {
 	
 	if (*ptr == 'i' || (*ptr >= '0' && *ptr <= '9')) {
 		// integer or byte string
-		int64 number = 0;
+		int64_t number = 0;
 		bool negate = false;
 		bool isInteger = (*ptr == 'i');
 		if (isInteger) {
@@ -237,7 +237,7 @@ BencodeObject::~BencodeObject() {
 	free(_stringValue);
 }
 
-void BencodeObject::setIntValue(int64 val) {
+void BencodeObject::setIntValue(int64_t val) {
 	if (_type != BencodeTypeInteger) {
 		return;
 	}
@@ -335,7 +335,7 @@ BencodeType BencodeObject::type() {
 	return _type;
 }
 
-int64 BencodeObject::intValue(int64 def) {
+int64_t BencodeObject::intValue(int64_t def) {
 	return (_type == BencodeTypeInteger ? _intValue : def);
 }
 
@@ -354,7 +354,7 @@ BencodeObject* BencodeObject::valueForKey(const char* key) {
 	return &it->second;
 }
 
-int64 BencodeObject::intValueForKey(const char* key, int64 def) {
+int64_t BencodeObject::intValueForKey(const char* key, int64_t def) {
 	BencodeObject* obj = valueForKey(key);
 
 	return (obj ? obj->intValue(def) : def);
@@ -429,7 +429,7 @@ size_t BencodeObject::serializedSize() {
 	switch (_type) {
 		case BencodeTypeInteger:
 		case BencodeTypeByteString: {
-			int64 n = (_type == BencodeTypeInteger ? _intValue : _byteStringSize);
+			int64_t n = (_type == BencodeTypeInteger ? _intValue : _byteStringSize);
 			if (n == 0) {
 				++_serializedSize;
 			} else {
@@ -485,7 +485,7 @@ size_t BencodeObject::serialize(void* dest, size_t maxlen) {
 		case BencodeTypeInteger:
 		case BencodeTypeByteString: {
 			char* p = ptr;
-			int64 n;
+			int64_t n;
 			if (_type == BencodeTypeInteger) {
 				*(ptr++) = 'i';
 				n = _intValue;
@@ -499,7 +499,7 @@ size_t BencodeObject::serialize(void* dest, size_t maxlen) {
 					*(ptr++) = '-';
 					n *= -1;
 				}
-				int64 m = 1000000000000000000;
+				int64_t m = 1000000000000000000;
 				while (n < m) {
 					m /= 10;
 				}
