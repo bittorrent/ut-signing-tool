@@ -31,7 +31,7 @@ TORRENT FORMAT:
     
     The signature info dict is for extensibility. Allowing this optional dict 
     that is signed, but doesn't change the identity of the torrent allows 
-    things like urls and comments to be added to signatures (and be trusted). 
+    things like URLs and comments to be added to signatures (and be trusted). 
 
     The certificate is the DER encoded x.509 certificate. it can be excluded to
     cut down on file size. If it's excluded, the user must already have this 
@@ -65,8 +65,8 @@ CREATING A SIGNING IDENTITY:
 
 SIGNING A CERTIFICATE REQUEST:
 
-    First, configure OpenSSL to not add any extensions to the certificate. This
-    will make the certificate v1 which drastically reduces its size.
+    Configure OpenSSL to not add any extensions to the certificate. This will 
+    make the certificate v1 which drastically reduces its size.
     
         Comment out the following line in your openssl.cnf:
 
@@ -82,7 +82,7 @@ SIGNING A CERTIFICATE REQUEST:
                       /usr/local/ssl/openssl.cnf
                       /usr/local/openssl/openssl.cnf
 
-    The serial number (after -set_serial) in the following command MUST be 
+    Run the following command. The serial number (after -set_serial) MUST be 
     unique for ALL certificates you issue!
 
         openssl x509 -req -days 365 -in cert.csr -CA cert.pem -CAkey privkey.pem 
