@@ -1,82 +1,89 @@
 COMPILING:
 
-	if you're running Windows, use a linux-like environment such as Cygwin or MinGW
+    If you're running Windows, use a linux-like environment such as Cygwin or
+    MinGW.
 
-	make sure you have GNU make, a compiler such as gcc or clang, and OpenSSL installed 
-	(they probably already are)
-	
-	run the make command
+    Make sure you have GNU make, a compiler such as gcc or clang, and OpenSSL 
+    installed (they probably already are).
+    
+    Run the make command.
 
 
 USAGE:
 
-	ut-signing-tool [--exclude-cert] privkey.pem cert.pem in.torrent out.torrent
+    ut-signing-tool [--exclude-cert] privkey.pem cert.pem in.torrent out.torrent
 
 
 TORRENT FORMAT:
 
-	{
-		announce: ...,
-		info: { ... },
-		signatures: {
-			com.bittorrent (the signing identity): {
-				info (optional): {
-					/*
-						this is mainly for extensibility. allowing this optional dict that 
-						is signed, but doesn't change the identity of the torrent allows 
-						things like urls and comments to be added to signatures (and to be 
-						trusted). 
-					*/
-				},
-				certificate (optional): 0123456789ABCDEF0123456789ABCDEF...,
-					/*	
-						this is the DER encoded x.509 certificate
-						
-						this can be excluded to cut down on file size. if it's excluded,
-						the user must already have this certificate stored and trusted
-					
-						if the issuer of this cert is trusted, this cert is also trusted
-						
-						there are no intermediate certificate authorities. only a root
-						authority
-					*/
-				]
-				signature: (sha1 signed data = info + signature info if present),
-			},
-			...
-		}
-	}
-	
+    {
+        announce: ...,
+        info: { ... },
+        signatures: {
+            com.bittorrent (the signing identity): {
+                info (optional): { ... },
+                certificate (optional): 0123456789ABCDEF0123456789ABCDEF...,
+                signature: (sha1 signed data = info + sig info if present),
+            },
+            ...
+        }
+    }
+    
+    The signature info dict is for extensibility. Allowing this optional dict 
+    that is signed, but doesn't change the identity of the torrent allows 
+    things like urls and comments to be added to signatures (and be trusted). 
+
+    The certificate is the DER encoded x.509 certificate. it can be excluded to
+    cut down on file size. If it's excluded, the user must already have this 
+    certificate stored and trusted.
+
+    If the issuer of the cert is trusted, the cert is also trusted.
+    
+    There are no intermediate certificate authorities. There is only a root 
+    authority.
+
 
 CREATING A SIGNING IDENTITY:
 
-	create your private key:
+    Create your private key:
 
-		openssl genrsa -des3 -out privkey.pem 2048
-	
-	create a certificate request:
-		
-			openssl req -new -key privkey.pem -out cert.csr
+        openssl genrsa -des3 -out privkey.pem 2048
+    
+    Create a certificate request:
+        
+            openssl req -new -key privkey.pem -out cert.csr
 
-			the common name should be a unique identifier for the identity in reverse-dns 
-			notation (eg com.bittorrent.chris)
+            The common name should be a unique identifier for the identity in 
+            reverse-dns notation (eg com.bittorrent or com.bittorrent.chris).
 
-	request your cert from a trusted certificate authority (eg BitTorrent) or sign your 
-	own certificate request
+    Request your cert from a trusted certificate authority (eg BitTorrent) or 
+    sign your own certificate request.
 
-	don't use these keys for anything other than signing torrents and other certificates!
+    Don't use these keys for anything other than signing torrents and other 
+    certificates!
 
 
 SIGNING A CERTIFICATE REQUEST:
 
-	first, configure openssl to not add any extensions to the certificate. this will make 
-	the certificate v1 which drastically reduces the size of the certificate
-	
-	comment out this line in your openssl.cnf (/System/Library/OpenSSL/openssl.cnf on osx):
+    First, configure OpenSSL to not add any extensions to the certificate. This
+    will make the certificate v1 which drastically reduces its size.
+    
+        Comment out the following line in your openssl.cnf:
 
-		x509_extensions        = usr_cert              # The extentions to add to the cert
+            x509_extensions = usr_cert      # The extentions to add to the cert
 
-	the serial number (after -set_serial) in the following command MUST be unique for ALL 
-	certificates you issue!
+        Common locations of openssl.cnf:
+        
+            OSX:      /System/Library/OpenSSL/openssl.cnf 
+            Ubuntu:   /etc/ssl/openssl.cnf
+            RedHat:   /etc/pki/tls/openssl.cnf
 
-		openssl x509 -req -days 365 -in cert.csr -CA cert.pem -CAkey privkey.pem -set_serial 01 -out newcert.pem
+            Other:    /usr/lib/ssl/openssl.cnf
+                      /usr/local/ssl/openssl.cnf
+                      /usr/local/openssl/openssl.cnf
+
+    The serial number (after -set_serial) in the following command MUST be 
+    unique for ALL certificates you issue!
+
+        openssl x509 -req -days 365 -in cert.csr -CA cert.pem -CAkey privkey.pem 
+         -set_serial 01 -out newcert.pem
