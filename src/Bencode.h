@@ -64,8 +64,7 @@ class BencodeObject {
 
 		// for byte strings
 		const void* byteStringValue(size_t* len);
-		// the canTerminate parameter is meant only to be used by stringValueForKey
-		const char* stringValue(const char* def = "", bool canTerminate = false);
+		const char* stringValue(const char* def = "");
 		void setByteStringValue(const void* val, size_t len, BencodeMode mode = BencodeModeNondestructive);
 
 		size_t serializedSize();
@@ -89,6 +88,8 @@ class BencodeObject {
 		char* _stringValue;
 
 		size_t _serializedSize;
+		
+		const char* _terminatedStringValue(const char* def, bool canTerminateInPlace = false);
 };
 
 #endif

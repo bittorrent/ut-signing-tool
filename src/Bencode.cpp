@@ -363,7 +363,7 @@ int64_t BencodeObject::intValueForKey(const char* key, int64_t def) {
 const char* BencodeObject::stringValueForKey(const char* key, const char* def) {
 	BencodeObject* obj = valueForKey(key);
 
-	return (obj ? obj->stringValue(def, _mode != BencodeModeNondestructive) : def);
+	return (obj ? obj->_terminatedStringValue(def, _mode != BencodeModeNondestructive) : def);
 }
 
 const void* BencodeObject::byteStringValueForKey(const char* key, size_t* len) {
@@ -400,7 +400,15 @@ const void* BencodeObject::byteStringValue(size_t* len) {
 	return _byteStringPtr;
 }
 
-const char* BencodeObject::stringValue(const char* def, bool canTerminate) {
+const char* BencodeObject::stringValue(const char* def) {
+	if (_type != BencodeTypeByteString) {
+		return NULL;
+	}
+	
+	return _terminatedStringValue(def, false);
+}
+
+const char* BencodeObject::_terminatedStringValue(const char* def, bool canTerminateInPlace) {
 	if (_type != BencodeTypeByteString) {
 		return def;
 	}
@@ -409,7 +417,7 @@ const char* BencodeObject::stringValue(const char* def, bool canTerminate) {
 		return _stringValue;
 	}
 
-	if (canTerminate) {
+	if (canTerminateInPlace) {
 		((char*)_byteStringPtr)[_byteStringSize] = '\0';
 		return (char*)_byteStringPtr;
 	}
