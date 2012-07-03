@@ -33,7 +33,7 @@ TORRENT FORMAT:
     that is signed, but doesn't change the identity of the torrent allows 
     things like URLs and comments to be added to signatures (and be trusted). 
 
-    The certificate is the DER encoded x.509 certificate. it can be excluded to
+    The certificate is the DER encoded x.509 certificate. It can be excluded to
     cut down on file size. If it's excluded, the user must already have this 
     certificate stored and trusted.
 
