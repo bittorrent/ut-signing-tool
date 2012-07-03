@@ -89,7 +89,7 @@ BencodeObject::BencodeObject(const void* data, size_t len, BencodeMode mode) {
 	char* origin = (char*)data;
 	char* ptr    = (char*)data;
 
-	// this takes a bit more memory than needed but tends to perform betters than 
+	// this takes a bit more memory than needed but tends to perform better than 
 	// just allocating memory for every byte string
 	if (mode == BencodeModeCopy) {
 		_mem = malloc(len);
