@@ -408,7 +408,7 @@ const char* BencodeObject::stringValue(const char* def) {
 	return _terminatedStringValue(def, false);
 }
 
-const char* BencodeObject::_terminatedStringValue(const char* def, bool canTerminateInPlace) {
+const char* BencodeObject::_terminatedStringValue(const char* def, bool terminateInPlace) {
 	if (_type != BencodeTypeByteString) {
 		return def;
 	}
@@ -417,7 +417,7 @@ const char* BencodeObject::_terminatedStringValue(const char* def, bool canTermi
 		return _stringValue;
 	}
 
-	if (canTerminateInPlace) {
+	if (terminateInPlace) {
 		((char*)_byteStringPtr)[_byteStringSize] = '\0';
 		return (char*)_byteStringPtr;
 	}

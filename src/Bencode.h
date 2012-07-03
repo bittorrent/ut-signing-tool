@@ -25,6 +25,9 @@ class BencodeObject;
 typedef std::map<BencodeObject, BencodeObject> BencodeDictStorage;
 typedef std::vector<BencodeObject> BencodeListStorage;
 
+// XXX: Copying or assigning objects invalidates the original. 
+//      This also breaks the constness of the original.
+
 class BencodeObject {
 	public:
 		BencodeObject();
@@ -89,7 +92,7 @@ class BencodeObject {
 
 		size_t _serializedSize;
 		
-		const char* _terminatedStringValue(const char* def, bool canTerminateInPlace = false);
+		const char* _terminatedStringValue(const char* def, bool terminateInPlace = false);
 };
 
 #endif
