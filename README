@@ -3,7 +3,7 @@ COMPILING:
     If you're running Windows, use a linux-like environment such as Cygwin or
     MinGW.
 
-    Make sure you have GNU make, a compiler such as gcc or clang, and OpenSSL 
+    Make sure you have GNU make, a compiler such as GCC or Clang, and OpenSSL 
     installed (they probably already are).
     
     Run the make command.
@@ -23,7 +23,7 @@ TORRENT FORMAT:
             com.bittorrent (the signing identity): {
                 info (optional): { ... },
                 certificate (optional): 0123456789ABCDEF0123456789ABCDEF...,
-                signature: (sha1 signed data = info + sig info if present),
+                signature: (SHA1 signed data = info + sig info if present),
             },
             ...
         }
@@ -33,7 +33,7 @@ TORRENT FORMAT:
     that is signed, but doesn't change the identity of the torrent allows 
     things like URLs and comments to be added to signatures (and be trusted). 
 
-    The certificate is the DER encoded x.509 certificate. It can be excluded to
+    The certificate is the DER encoded X.509 certificate. It can be excluded to
     cut down on file size. If it's excluded, the user must already have this 
     certificate stored and trusted.
 
@@ -87,3 +87,47 @@ SIGNING A CERTIFICATE REQUEST:
 
         openssl x509 -req -days 365 -in cert.csr -CA cert.pem -CAkey privkey.pem 
          -set_serial 01 -out newcert.pem
+
+
+NOTES:
+
+    X.509 extensions could potentially be used to place limitations on what 
+    certificates can be used for. For example, a certificate could be signed for
+    a record label which specifies that only signed MP3, MP4, JPG, and PDF files
+    are to be trusted.
+    
+    In the future, other algorithms and signature types may be supported. For 
+    now we just assume SHA1 / RSA.
+    
+    Expiration times on torrent certificates aren't as meaningful as they are in
+    SSL. There's no way to tell when a file was actually signed, and no one 
+    wants to have to update all their torrent files every year or few years when
+    their certificate expires. Instead of invalidating certificates based on 
+    expiration date, a CRL may required (or at least strongly recommended) in 
+    the future for trusted authorities. If an expiration date is in the past, 
+    the warning should be minimal if not non-existent, and of course, users 
+    should be able to have a preference. However, for now since CRLs aren't yet
+    implemented, uTorrent checks expiration dates strictly.
+    
+    On a related note, excluding certificates from torrents comes with a nice 
+    advantage: If a certificate expires, there's no need to update the torrent 
+    file, as long as the newer cert uses the same public / private key-pair.
+    
+    Certificate chains of any length may be a possibility in the future, but 
+    there are a few reasons this functionality isn't currently implemented. They
+    could bloat the torrent files by requiring more certificates to be stored 
+    within. In the current implementation, there will never be more than one 
+    certificate present, which alone can already be a bit big. Downloading all 
+    the certificates in the chain on-demand would introduce an entirely new set 
+    of problems. Certificate chains also force those that are signing torrents 
+    to maintain copies of not only their certificate, but all certificates 
+    between theirs and the root certificate. In addition, the basic constraints 
+    extension would need to be implemented and v3 certificates would need to be 
+    used for security measures. V3 certificates are significantly larger than v1
+    certificates so that would even further bloat the torrent files.
+    
+    Trusted root certificates inherently have stronger security than trusted 
+    non-root certificates. Trusted root certificates are self-signed so you can 
+    be sure that the contents have not been tampered with. Trusted non-root 
+    certificates can't always be verified because we might not have the issuer's
+    certificate.
