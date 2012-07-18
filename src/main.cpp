@@ -20,6 +20,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <openssl/pem.h>
 
 #include <stdio.h>
+#include <string.h>
 
 bool loadBencodedFile(const char* filename, BencodeObject* obj) {
 	FILE* f = fopen(filename, "rb");
@@ -166,7 +167,7 @@ int main(int argc, const char* argv[]) {
 	printf("Certificate loaded. (identity = %s)\n", common_name);
 
 	// create the signature
-		
+
 	BencodeObject* torrent_info = torrent.valueForKey("info");
 	
 	if (!torrent_info) {
