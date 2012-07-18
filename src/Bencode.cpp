@@ -519,7 +519,7 @@ size_t BencodeObject::serialize(void* dest, size_t maxlen) {
 					*(ptr++) = '-';
 					n *= -1;
 				}
-				int64_t m = 1000000000000000000;
+				int64_t m = 1000000000000000000LL;
 				while (n < m) {
 					m /= 10;
 				}
