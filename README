@@ -51,10 +51,10 @@ CREATING A SIGNING IDENTITY:
     
     Create a certificate request:
         
-            openssl req -new -key privkey.pem -out cert.csr
+        openssl req -new -key privkey.pem -out cert.csr
 
-            The common name should be a unique identifier for the identity in 
-            reverse-dns notation (eg com.bittorrent or com.bittorrent.chris).
+        The common name should be a unique identifier for the identity in 
+        reverse-dns notation (eg com.bittorrent or com.bittorrent.chris).
 
     Request your cert from a trusted certificate authority (eg BitTorrent) or 
     sign your own certificate request.
