@@ -21,8 +21,8 @@ TORRENT FORMAT:
         info: { ... },
         signatures: {
             com.bittorrent (the signing identity): {
-                info (optional): { ... },
                 certificate (optional): 0123456789ABCDEF0123456789ABCDEF...,
+                info (optional): { ... },
                 signature: (SHA1 signed data = info + sig info if present),
             },
             ...
