@@ -22,11 +22,37 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <stdio.h>
 #include <string.h>
 
+bool loadBencodedStdin(BencodeObject* obj) {
+	const size_t block_size = 4096;
+	char* buf = NULL;
+	size_t len = 0;
+
+	for (size_t i = 0; ; ++i) {
+		buf = (char*)realloc(buf, (i + 1) * block_size);
+		size_t bytes = fread(buf + i * block_size, 1, block_size, stdin);
+		len += bytes;
+		if (bytes < block_size) {
+			break;
+		}
+	}
+	
+	BencodeObject tmp(buf, len, BencodeModeAdopt);
+
+	if (tmp.type() == BencodeTypeInvalid) {
+		fprintf(stderr, "Couldn't parse stdin.\n");
+		return false;
+	}
+	
+	*obj = tmp;
+	
+	return true;
+}
+
 bool loadBencodedFile(const char* filename, BencodeObject* obj) {
 	FILE* f = fopen(filename, "rb");
 	
 	if (!f) {
-		printf("Couldn't open %s\n", filename);
+		fprintf(stderr, "Couldn't open %s\n", filename);
 		return false;
 	}
 
@@ -37,13 +63,13 @@ bool loadBencodedFile(const char* filename, BencodeObject* obj) {
 	char* f_buff = (char*)malloc(f_size);
 	
 	if (!f_buff) {
-		printf("Out of memory!\n");
+		fprintf(stderr, "Out of memory!\n");
 		fclose(f);
 		return false;
 	}
 	
 	if (fread(f_buff, f_size, 1, f) != 1) {
-		printf("Couldn't read %s\n", filename);
+		fprintf(stderr, "Couldn't read %s\n", filename);
 		free(f_buff);
 		fclose(f);
 		return false;
@@ -54,13 +80,30 @@ bool loadBencodedFile(const char* filename, BencodeObject* obj) {
 	BencodeObject tmp(f_buff, f_size, BencodeModeAdopt);
 	
 	if (tmp.type() == BencodeTypeInvalid) {
-		printf("Couldn't parse %s\n", filename);
+		fprintf(stderr, "Couldn't parse %s\n", filename);
 		return false;
 	}
 	
 	*obj = tmp;
-	
+
 	return true;
+}
+
+int passwordCallback(char *buf, int size, int rwflag, void *u) {
+	if (!u) {
+		fprintf(stderr, "No password provided.\n");
+		return 0;
+	}
+
+	size_t len = strlen((char*)u);
+
+	if (len > size) {
+		return 0;
+	}
+
+	memcpy(buf, u, len);
+
+	return len;
 }
 
 #define CLEAN_UP() \
@@ -81,6 +124,8 @@ bool loadBencodedFile(const char* filename, BencodeObject* obj) {
 	ERR_print_errors_fp(stderr); \
 	CLEAN_UP(); \
 	return 1;
+	
+#define LOGF(...) if (!useStdout) printf(__VA_ARGS__)
 
 int main(int argc, const char* argv[]) {
 	// these are things that have to be freed / closed
@@ -96,29 +141,40 @@ int main(int argc, const char* argv[]) {
 	
 	const char* filenames[4];
 	bool includeCert = true;
+	const char* password = NULL;
+	bool useStdin = false;
+	bool useStdout = false;
 	
 	int fcount = 0;
+	bool nextArgumentIsPassword = false;
 	for (int i = 1; i < argc; ++i) {
-		if (!strcmp(argv[i], "--exclude-cert")) {
+		if (nextArgumentIsPassword) {
+			password = argv[i];
+			nextArgumentIsPassword = false;
+		} else if (!strcmp(argv[i], "--exclude-cert")) {
 			includeCert = false;
+		} else if (!strcmp(argv[i], "--password")) {
+			nextArgumentIsPassword = true;
 		} else if (fcount < 4) {
 			filenames[fcount++] = argv[i];
 		}
 	}
 	
-	if (fcount < 4) {
-		ERROR_OUT("Usage: ut-signing-tool [--exclude-cert] privkey.pem cert.pem in.torrent out.torrent\n");
+	if (fcount != 2 && fcount != 4) {
+		ERROR_OUT("Usage: ut-signing-tool [--exclude-cert] [--password password] privkey.pem cert.pem [in.torrent out.torrent]\n");
 	}
 	
+	useStdin = useStdout = (fcount == 2);
+
 	// read the torrent
-	
+
 	BencodeObject torrent;
-	
-	if (!loadBencodedFile(filenames[2], &torrent)) {
+
+	if ((!useStdin && !loadBencodedFile(filenames[2], &torrent)) || (useStdin && !loadBencodedStdin(&torrent))) {
 		ERROR_OUT("Couldn't load torrent.\n");
 	}
 	
-	printf("Torrent loaded.\n");
+	LOGF("Torrent loaded.\n");
 	
 	// read the private key
 
@@ -130,7 +186,7 @@ int main(int argc, const char* argv[]) {
 		ERROR_OUT("Couldn't open %s\n", filenames[0]);
 	}
 
-	private_key = PEM_read_PrivateKey(f, NULL, NULL, NULL);
+	private_key = PEM_read_PrivateKey(f, NULL, (useStdin || useStdout ? passwordCallback : NULL), (void*)password);
 	
 	if (!private_key) {
 		OPENSSL_ERROR_OUT();
@@ -139,7 +195,7 @@ int main(int argc, const char* argv[]) {
 	fclose(f);
 	f = NULL;
 	
-	printf("Private key loaded.\n");
+	LOGF("Private key loaded.\n");
 	
 	// read the certificate
 	
@@ -148,7 +204,7 @@ int main(int argc, const char* argv[]) {
 		ERROR_OUT("Couldn't open %s\n", filenames[1]);
 	}
 
-	x509 = PEM_read_X509(f, NULL, NULL, NULL);
+	x509 = PEM_read_X509(f, NULL, (useStdin || useStdout ? passwordCallback : NULL), (void*)password);
 	
 	if (!x509) {
 		OPENSSL_ERROR_OUT();
@@ -164,7 +220,7 @@ int main(int argc, const char* argv[]) {
 	}
 	X509_NAME_get_text_by_NID(name, NID_commonName, common_name, 65);
 
-	printf("Certificate loaded. (identity = %s)\n", common_name);
+	LOGF("Certificate loaded. (identity = %s)\n", common_name);
 
 	// create the signature
 
@@ -194,7 +250,7 @@ int main(int argc, const char* argv[]) {
 		OPENSSL_ERROR_OUT();
 	}
 	
-	printf("Signature size: %u\n", sig_len);
+	LOGF("Signature size: %u\n", sig_len);
 	
 	// prepare the new file data
 	
@@ -218,7 +274,7 @@ int main(int argc, const char* argv[]) {
 		BencodeObject sig_certificate(BencodeTypeByteString);
 		sig_certificate.setByteStringValue(cbuff, clen, BencodeModeAdopt);
 
-		printf("Bencoded certificate size: %lu\n", sig_certificate.serializedSize());
+		LOGF("Bencoded certificate size: %lu\n", sig_certificate.serializedSize());
 
 		signature.setValueForKey("certificate", &sig_certificate);		
 	}
@@ -226,7 +282,7 @@ int main(int argc, const char* argv[]) {
 	BencodeObject sig_signature(BencodeTypeByteString);
 	sig_signature.setByteStringValue(sig_buff, sig_len);
 
-	printf("Bencoded signature size: %lu\n", sig_signature.serializedSize());
+	LOGF("Bencoded signature size: %lu\n", sig_signature.serializedSize());
 
 	signature.setValueForKey("signature", &sig_signature);
 	
@@ -241,7 +297,7 @@ int main(int argc, const char* argv[]) {
 	
 	// write the file
 	
-	f = fopen(filenames[3], "wb");
+	f = useStdout ? stdout : fopen(filenames[3], "wb");
 	if (!f) {
 		ERROR_OUT("Couldn't open %s\n", filenames[3]);
 	}
@@ -266,7 +322,7 @@ int main(int argc, const char* argv[]) {
 	
 	// done!
 	
-	printf("Done!\n");
+	LOGF("Done!\n");
 	
 	CLEAN_UP();
 	

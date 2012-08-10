@@ -70,7 +70,7 @@ SIGNING A CERTIFICATE REQUEST:
     
         Comment out the following line in your openssl.cnf:
 
-            x509_extensions = usr_cert      # The extentions to add to the cert
+            x509_extensions = usr_cert      # The extensions to add to the cert
 
         Common locations of openssl.cnf:
         
