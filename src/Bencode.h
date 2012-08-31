@@ -16,6 +16,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <map>
 #include <vector>
 #include <stdint.h>
+#include <string.h>
 
 typedef enum {
 	BencodeTypeInvalid,
