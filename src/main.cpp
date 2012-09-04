@@ -107,7 +107,7 @@ int passwordCallback(char *buf, int size, int rwflag, void *u) {
 }
 
 #define CLEAN_UP() \
-	fclose(f); \
+	if (f) { fclose(f); } \
 	free(info_data); \
 	free(sig_buff); \
 	EVP_PKEY_free(private_key); \
