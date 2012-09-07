@@ -22,6 +22,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <stdio.h>
 #include <string.h>
 
+#include <unistd.h>
+#include <pwd.h>
+
 bool loadBencodedStdin(BencodeObject* obj) {
 	const size_t block_size = 4096;
 	char* buf = NULL;
@@ -142,40 +145,30 @@ int main(int argc, const char* argv[]) {
 	const char* filenames[4];
 	bool includeCert = true;
 	const char* password = NULL;
+	const char* setUser = NULL;
 	bool useStdin = false;
 	bool useStdout = false;
 	
 	int fcount = 0;
-	bool nextArgumentIsPassword = false;
+
 	for (int i = 1; i < argc; ++i) {
-		if (nextArgumentIsPassword) {
-			password = argv[i];
-			nextArgumentIsPassword = false;
-		} else if (!strcmp(argv[i], "--exclude-cert")) {
+		if (!strcmp(argv[i], "--exclude-cert")) {
 			includeCert = false;
-		} else if (!strcmp(argv[i], "--password")) {
-			nextArgumentIsPassword = true;
+		} else if (!strcmp(argv[i], "--password") && i + 1 < argc) {
+			password = argv[++i];
+		} else if (!strcmp(argv[i], "--setuser") && i + 1 < argc) {
+			setUser = argv[++i];
 		} else if (fcount < 4) {
 			filenames[fcount++] = argv[i];
 		}
 	}
 	
 	if (fcount != 2 && fcount != 4) {
-		ERROR_OUT("Usage: ut-signing-tool [--exclude-cert] [--password password] privkey.pem cert.pem [in.torrent out.torrent]\n");
+		ERROR_OUT("Usage: ut-signing-tool [--exclude-cert] [--password password] [--setuser user] privkey.pem cert.pem [in.torrent out.torrent]\n");
 	}
 	
 	useStdin = useStdout = (fcount == 2);
 
-	// read the torrent
-
-	BencodeObject torrent;
-
-	if ((!useStdin && !loadBencodedFile(filenames[2], &torrent)) || (useStdin && !loadBencodedStdin(&torrent))) {
-		ERROR_OUT("Couldn't load torrent.\n");
-	}
-	
-	LOGF("Torrent loaded.\n");
-	
 	// read the private key
 
 	OpenSSL_add_all_algorithms();
@@ -196,6 +189,26 @@ int main(int argc, const char* argv[]) {
 	f = NULL;
 	
 	LOGF("Private key loaded.\n");
+	
+	// set uid to be safe
+	
+	struct passwd* pw = getpwnam(setUser);
+	
+	if (!pw) {
+		ERROR_OUT("User %s doesn't exist.\n", setUser);
+	}
+	
+	setuid(pw->pw_uid);
+
+	// read the torrent
+
+	BencodeObject torrent;
+
+	if ((!useStdin && !loadBencodedFile(filenames[2], &torrent)) || (useStdin && !loadBencodedStdin(&torrent))) {
+		ERROR_OUT("Couldn't load torrent.\n");
+	}
+	
+	LOGF("Torrent loaded.\n");
 	
 	// read the certificate
 	
