@@ -192,13 +192,15 @@ int main(int argc, const char* argv[]) {
 	
 	// set uid to be safe
 	
-	struct passwd* pw = getpwnam(setUser);
-	
-	if (!pw) {
-		ERROR_OUT("User %s doesn't exist.\n", setUser);
+	if (setUser) {
+		struct passwd* pw = getpwnam(setUser);
+		
+		if (!pw) {
+			ERROR_OUT("User %s doesn't exist.\n", setUser);
+		}
+		
+		setuid(pw->pw_uid);
 	}
-	
-	setuid(pw->pw_uid);
 
 	// read the torrent
 
