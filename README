@@ -1,6 +1,6 @@
 COMPILING:
 
-    If you're running Windows, use a linux-like environment such as Cygwin or
+    If you're running Windows, use a Unix-like environment such as Cygwin or
     MinGW.
 
     Make sure you have GNU make, a compiler such as GCC or Clang, and OpenSSL 
@@ -9,7 +9,7 @@ COMPILING:
     Run the make command.
 
 
-USAGE:
+BASIC USAGE:
 
     ut-signing-tool [--exclude-cert] privkey.pem cert.pem in.torrent out.torrent
 
