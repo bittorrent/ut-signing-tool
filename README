@@ -103,7 +103,7 @@ NOTES:
     SSL. There's no way to tell when a file was actually signed, and no one 
     wants to have to update all their torrent files every year or few years when
     their certificate expires. Instead of invalidating certificates based on 
-    expiration date, a CRL may required (or at least strongly recommended) in 
+    expiration date, a CRL may be required (or at least strongly recommended) in 
     the future for trusted authorities. If an expiration date is in the past, 
     the warning should be minimal if not non-existent, and of course, users 
     should be able to have a preference. However, for now since CRLs aren't yet
